@@ -51,7 +51,17 @@ export const login = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     token,
-    refreshToken,
     user: loginUser,
   });
+});
+
+/**
+ * @DESC User Login
+ * @ROUTE /api/v1/auth/login
+ * @method POST
+ * @access public
+ */
+export const logout = asyncHandler(async (req, res) => {
+  res.clearCookie("accessToken");
+  res.status(200).json({ message: "Logout successful" });
 });
