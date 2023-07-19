@@ -47,11 +47,18 @@ export const login = asyncHandler(async (req, res) => {
     }
   );
 
-  res.cookie("accessToken", token);
+  res.cookie("accessToken", token, {
+    httpOnly: true,
+    secure: process.env.APP_ENV == "Development" ? false : true,
+    sameSite: "strict",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 
   res.status(200).json({
     token,
     user: loginUser,
+    message: "User Login Successful",
   });
 });
 
@@ -64,4 +71,50 @@ export const login = asyncHandler(async (req, res) => {
 export const logout = asyncHandler(async (req, res) => {
   res.clearCookie("accessToken");
   res.status(200).json({ message: "Logout successful" });
+});
+
+/**
+ * @DESC Create new User
+ * @ROUTE /api/v1/user
+ * @method POST
+ * @access public
+ */
+export const register = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  // check user email
+  const userEmailCheck = await User.findOne({ email });
+
+  if (userEmailCheck) {
+    return res.status(400).json({ message: "Email already exists" });
+  }
+
+  // password hash
+  const hashPass = await bcrypt.hash(password, 10);
+
+  // create new user
+  const user = await User.create({
+    name,
+    email,
+    password: hashPass,
+  });
+
+  res.status(200).json({
+    user,
+    message: "User Created successful",
+  });
+});
+
+/**
+ * @DESC Create new User
+ * @ROUTE /api/v1/user
+ * @method POST
+ * @access public
+ */
+export const loggedInUser = asyncHandler(async (req, res) => {
+  res.status(200).json(req.me);
 });
